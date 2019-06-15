@@ -1,81 +1,158 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
+import { BASE_LOCAL_ENDPOINT } from "../constants";
+import axios from "axios";
+import Character from "../components/Character";
 
 class CharacterList extends Component {
-    constructor(props) {
-        super(props);
-        this.state = { 
-            characters: {
-                content: [],
-                error: false
-            },
-            newCharacterFrom: {
-                name: "",
-                location: "",
-                status: "",
-                species: "",
-                gender: "",
-                origin: "",
-                image: ""
-            },
-            createCharacterError: false
-         }
+  constructor(props) {
+    super(props);
+    this.state = {
+      characters: {
+        content: [],
+        error: false
+      },
+      newCharacterFrom: {
+        name: "",
+        location: "",
+        status: "",
+        species: "",
+        gender: "",
+        origin: "",
+        image: ""
+      },
+      createCharacterError: false
+    };
+  }
+
+  componentDidMount = () => {
+    this.getCharacters();
+  };
+
+  getCharacters = () => {
+    axios
+      .get(`${BASE_LOCAL_ENDPOINT}/characters`)
+      .then(response => {
+        // handle success
+        this.setState({
+          characters: {
+            content: response.data
+          }
+        });
+      })
+      .catch(() => {
+        // handle error
+        this.setState({
+          characters:{
+              error:true
+          }
+        });
+      });
+  };
+
+  createCharacter = (e) => {
+      e.preventDefault();
+      const {
+        newCharacterFrom:{
+            name,
+            location,
+            status,
+            species,
+            gender,
+            origin,
+            image,
+        } 
+    }= this.state
+
+    axios.post(`${BASE_LOCAL_ENDPOINT}/characters`, {
+        name,
+        location,
+        status,
+        species,
+        gender,
+        origin,
+        image,
+      }, {
+          headers:{"content-type": "aplication/jsn"}
+      })
+      .then(() => {
+        this.getCharacters();
+      })
+      .catch( () => {
+        this.setState({
+            createCharacterError:true
+        })
+    });
+  };
+
+  createTextInput = (value, field) => (
+    <input
+      required
+      type="text"
+      placeholder={field}
+      onChange={e => this.handleInputChange(e.target.value, field)}
+      value={value}
+    />
+  );
+
+  handleInputChange = (value, field) => {
+    this.setState(prevState => ({
+      newCharacterFrom: {
+        ...prevState.newCharacterFrom,
+        [field]: value
+      }
+    }));
+  };
+
+  render() {
+    const {
+      characters: { content, error },
+      newCharacterFrom: {
+        name,
+        location,
+        status,
+        species,
+        gender,
+        origin,
+        image
+      }
+    } = this.state;
+
+    let mostrarContenido;
+    if (error) {
+      mostrarContenido = <div>Error al Cargar el contenido</div>;
+    } else {
+        mostrarContenido=
+      <div>
+        {content.map(personaje => (
+          <Character
+            key={personaje.id}
+            imgSrc={personaje.image}
+            name={personaje.name}
+          />
+        ))}
+      </div>;
     }
 
-    getCharacters = () => {}
+    return (
+      <>
+        <h2>Create Character</h2>
 
-    createCharacter = (e) => {}
-
-    createTextInput = (value, field) => (
-        <input
-            required
-            type="text"
-            placeholder={field}
-            onChange={(e) => this.handleInputChange(e.target.value, field)}
-            value={value}
-        />
-    )
-
-    handleInputChange = (value, field) => {
-        this.setState(prevState => ({
-            newCharacterFrom: {
-                ...prevState.newCharacterFrom,
-                [field]: value
-            }
-        }))
-    }
-
-    render() { 
-        const {
-            newCharacterFrom: {
-                name,
-                location,
-                status,
-                species,
-                gender,
-                origin,
-                image
-            }
-        } = this.state;
-
-        return (
-            <>  
-                <h2>Create Character</h2>
-
-                <form onSubmit={e => this.createCharacter(e)}>
-                    {this.createTextInput(name, 'name')}
-                    {this.createTextInput(location, 'location')}
-                    {this.createTextInput(status, 'status')}
-                    {this.createTextInput(species, 'species')}
-                    {this.createTextInput(gender, 'gender')}
-                    {this.createTextInput(origin, 'origin')}
-                    {this.createTextInput(image, 'image')}
-                    <button type="submit">Create</button>
-                </form>
-            </>
-        );
-    }
+        <form onSubmit={e => this.createCharacter(e)}>
+          {this.createTextInput(name, "name")}
+          {this.createTextInput(location, "location")}
+          {this.createTextInput(status, "status")}
+          {this.createTextInput(species, "species")}
+          {this.createTextInput(gender, "gender")}
+          {this.createTextInput(origin, "origin")}
+          {this.createTextInput(image, "image")}
+          <button type="submit">Create</button>
+        </form>
+        {mostrarContenido}
+      </>
+    );
+  }
 }
- 
+
 export default CharacterList;
 
 //----------------------------------------------------------------------------------------
